@@ -1,5 +1,5 @@
-import { useClerk, useUser } from '@clerk/clerk-react'
-import { Eraser, FileText, Hash, House, Image, Scissors, SquarePen, Users } from 'lucide-react'
+import { Protect, useClerk, useUser } from '@clerk/clerk-react'
+import { Eraser, FileText, Hash, House, Image, LogOut, Scissors, SquarePen, Users } from 'lucide-react'
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 
@@ -38,7 +38,19 @@ const Sidebar = ({sidebar,setSidebar}) => {
                 ))}
             </div>
         </div>
-        
+        <div className='w-full border-t border-gray-200 p-4 px-7 flex items-center justify-between'>
+            <div className='flex gap-2 items-center justify-between' onClick={openUserProfile}>
+                <img src={user.imageUrl} className='w-8 rounded-full cursor-pointer'/>
+                <div>
+                    <h1 className='text-sm font-medium cursor-pointer'>{user.fullName}</h1>
+                    <p className='text-xs text-gray-500 cursor-pointer'>
+                        <Protect plan='premium' fallback='Free'>Premium</Protect>
+                    </p>
+                </div>
+            </div>
+            <LogOut onClick={signOut} className='w-4.5 text-gray-400 hover:text-gray-700 transition cursor-pointer' />
+        </div>
+
     </div>
   )
 }
