@@ -13,11 +13,12 @@ const Community = () => {
   // }
   
   // useEffect(()=>{    
-  //   if(user){     
-  //     fetchCreation()
-  //   }
+  //     async function fetchData() {
+  //   const response = await fetch("http://127.0.0.1:3000/name=dipali", {});
+  //   console.log(response.json())
+  // }
+  // fetchData();
   // },[user])
-  console.log(creations[0])
 
   return (
     <div className='flex-1 h-full flex flex-col gap-4 p-6'>

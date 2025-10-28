@@ -10,8 +10,16 @@ import ReviewResume from './pages/ReviewResume'
 import Community from './pages/Community'
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { useAuth } from '@clerk/clerk-react'
+import { useEffect } from 'react'
 
 const App = () => {
+
+  const {getToken}= useAuth()
+  useEffect(()=>{
+    getToken().then((token)=>console.log(token))
+  },[])
+  
   return (
     <div>
       <Routes>
