@@ -113,7 +113,7 @@ export const generateBlogTitles = async (req, res) => {
       });
     }
 
-    res.json({ sucess: true, content });
+    res.json({ success: true, content });
   } catch (error) {
     console.log(error);
     res.json({
@@ -163,7 +163,7 @@ export const generateImage = async (req, res) => {
       publish ?? false
     })`;
 
-    res.json({ sucess: true, content: secure_url });
+    res.json({ success: true, content: secure_url });
   } catch (error) {
     console.log(error);
     res.json({
@@ -200,7 +200,7 @@ export const removeImageBackgroud = async (req, res) => {
 
     await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId}, 'Remove background from image', ${secure_url}, 'image')`;
 
-    res.json({ sucess: true, content: secure_url });
+    res.json({ success: true, content: secure_url });
   } catch (error) {
     console.log(error);
     res.json({
@@ -239,7 +239,7 @@ export const removeImageObject = async (req, res) => {
 
     await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId},${`Removed ${object} from image`}, ${imageUrl}, 'image')`;
 
-    res.json({ sucess: true, content: imageUrl });
+    res.json({ success: true, content: imageUrl });
   } catch (error) {
     console.log(error);
     res.json({
@@ -293,7 +293,7 @@ export const resumeReview = async (req, res) => {
 
     await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId},'Review the uploaded resume, ${content}, 'resume-review')`;
 
-    res.json({ sucess: true, content });
+    res.json({ success: true, content });
   } catch (error) {
     console.log(error);
     res.json({
