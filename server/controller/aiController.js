@@ -3,6 +3,8 @@ import sql from "../configs/db.js";
 import { clerkClient } from "@clerk/express";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
+import fs from "fs";
+import pdf from 'pdf-parse/lib/pdf-parse.js'
 
 const AI = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -146,6 +148,136 @@ export const generateImage = async (req, res) => {
     })`;
 
     res.json({ sucess: true, content: secure_url });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const removeImageBackgroud = async (req, res) => {
+  try {
+    const { userId } = await req.auth();
+    const { image } = req.file;
+    const user = await clerkClient.users.getUser(userId);
+    const plan = user.raw.unsafe_metadata.plan;
+
+    // console.log(plan)
+
+    if (plan !== "premium") {
+      return res.json({
+        success: false,
+        message: "This feature is only available for premium subscription",
+      });
+    }
+
+    const { secure_url } = await cloudinary.uploader.upload(image.path, {
+      transformation: [
+        {
+          effect: "backgroud-removal",
+          background_removal: "remove_the_background",
+        },
+      ],
+    });
+
+    await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId}, 'Remove background from image', ${secure_url}, 'image')`;
+
+    res.json({ sucess: true, content: secure_url });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const removeImageObject = async (req, res) => {
+  try {
+    const { userId } = await req.auth();
+    const { object } = req.body;
+    const { image } = req.file;
+    const user = await clerkClient.users.getUser(userId);
+    const plan = user.raw.unsafe_metadata.plan;
+
+    // console.log(plan)
+
+    if (plan !== "premium") {
+      return res.json({
+        success: false,
+        message: "This feature is only available for premium subscription",
+      });
+    }
+
+    const { public_id } = await cloudinary.uploader.upload(image.path);
+    const imageUrl = cloudinary.url(public_id, {
+      transformation: [
+        {
+          effect: `gen_remove:${object}`,
+        },
+      ],
+      resource_type: "image",
+    });
+
+    await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId},${`Removed ${object} from image`}, ${imageUrl}, 'image')`;
+
+    res.json({ sucess: true, content: imageUrl });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const resumeReview = async (req, res) => {
+  try {
+    const { userId } = await req.auth();
+    const resume = req.file;
+    const user = await clerkClient.users.getUser(userId);
+    const plan = user.raw.unsafe_metadata.plan;
+
+    // console.log(plan)
+
+    if (plan !== "premium") {
+      return res.json({
+        success: false,
+        message: "This feature is only available for premium subscription",
+      });
+    }
+
+    if (resume.size > 5 * 1024 * 1024) {
+      return res.json({
+        success: false,
+        message: "Resume file size exceeds allowed size(5 MB)",
+      });
+    }
+
+    const dataBuffer = fs.readFileSync(resume.path);
+    const pdfData= await pdf(dataBuffer);
+
+    const prompt=`Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resime Content: \n\n ${pdfData.text}`
+
+    const response = await AI.chat.completions.create({
+      model: "gemini-2.0-flash",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    const content = response.choices[0].message.content;
+
+    await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId},'Review the uploaded resume, ${content}, 'resume-review')`;
+
+    res.json({ sucess: true, content });
   } catch (error) {
     console.log(error);
     res.json({
