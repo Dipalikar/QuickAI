@@ -18,7 +18,7 @@ const navItems=[
 const Sidebar = ({sidebar,setSidebar}) => {
 
     const {user}=useUser();
-    console.log(user)
+    // console.log(user)
     const {signOut, openUserProfile}= useClerk()
 
   return (

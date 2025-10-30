@@ -4,12 +4,28 @@ import { clerkClient } from "@clerk/express";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import pdf from 'pdf-parse/lib/pdf-parse.js'
+// import pdf from 'pdf-parse/lib/pdf-parse.js'
 
 const AI = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
   baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
 });
+
+export const processPDFFile = async (req, res) => {
+  try {
+    const pdfParse = (await import("pdf-parse")).default;
+
+    const pdfBuffer = req.file.buffer; // or however you get the PDF
+    const data = await pdfParse(pdfBuffer);
+
+    const extractedText = data.text;
+
+    res.json({ success: true, text: extractedText });
+  } catch (error) {
+    console.error("PDF processing error:", error);
+    res.status(500).json({ error: "Failed to process PDF" });
+  }
+};
 
 export const generateArticle = async (req, res) => {
   try {
@@ -49,7 +65,7 @@ export const generateArticle = async (req, res) => {
       });
     }
 
-    res.json({ sucess: true, content });
+    res.json({ success: true, content });
   } catch (error) {
     console.log(error);
     res.json({
@@ -257,9 +273,9 @@ export const resumeReview = async (req, res) => {
     }
 
     const dataBuffer = fs.readFileSync(resume.path);
-    const pdfData= await pdf(dataBuffer);
+    const pdfData = await pdf(dataBuffer);
 
-    const prompt=`Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resime Content: \n\n ${pdfData.text}`
+    const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resime Content: \n\n ${pdfData.text}`;
 
     const response = await AI.chat.completions.create({
       model: "gemini-2.0-flash",
