@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useAuth, useUser } from "@clerk/clerk-react";
-import { dummyPublishedCreationData } from "../assets/assets";
 import toast from "react-hot-toast";
 import axios from "axios";
 
@@ -21,11 +20,8 @@ const Community = () => {
         headers: { Authorization: `Bearer ${await getToken()}` },
       });
       if (data.success) {
-        // console.log("Response data:", data);
         setCreations(data.creations);
-        // console.log(data); // Just set the content directly, it's text not an image
       } else {
-        // console.log(data);
         toast.error(data.message);
       }
     } catch (error) {
