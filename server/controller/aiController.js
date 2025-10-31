@@ -216,7 +216,7 @@ export const removeImageObject = async (req, res) => {
   try {
     const { userId } = await req.auth();
     const { object } = req.body;
-    const { image } = req.file;
+    const  image  = req.file;
     const user = await clerkClient.users.getUser(userId);
     const plan = user.raw.unsafe_metadata.plan;
 
@@ -239,7 +239,7 @@ export const removeImageObject = async (req, res) => {
       resource_type: "image",
     });
 
-    await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId},${`Removed ${object} from image`}, ${imageUrl}, 'image')`;
+    await sql`INSERT INTO public.creations(user_id, prompt, content,type) VALUES (${userId},${`Removed ${object} from image`}, ${imageUrl}, 'image')`;
 
     res.json({ success: true, content: imageUrl });
   } catch (error) {
@@ -293,7 +293,7 @@ export const resumeReview = async (req, res) => {
 
     const content = response.choices[0].message.content;
 
-    await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId},'Review the uploaded resume, ${content}, 'resume-review')`;
+    await sql`INSERT INTO public.creations(user_id, prompt, content,type) VALUES (${userId},'Review the uploaded resume, ${content}, 'resume-review')`;
 
     res.json({ success: true, content });
   } catch (error) {
