@@ -131,7 +131,7 @@ export const generateImage = async (req, res) => {
     const user = await clerkClient.users.getUser(userId);
     const plan = user.raw.unsafe_metadata.plan;
 
-    // console.log(plan)
+    console.log(prompt)
 
     if (plan !== "premium") {
       return res.json({

@@ -30,7 +30,7 @@ const GenerateImages = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const prompt = `Generate an image of ${input} in the style ${selectedStyle}`;
+      const prompt = `Generate an image of ${input} in the style ${selectedStyle.text}`;
 
       const { data } = await axios.post(
         "/api/ai/generate-image",
@@ -50,6 +50,7 @@ const GenerateImages = () => {
     }
     setLoading(false);
   };
+
 
   return (
     <div className="h-full overflow-y-scroll p-6 flex items-start  gap-4 text-slate-700">
