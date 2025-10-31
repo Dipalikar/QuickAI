@@ -4,6 +4,7 @@ import { clerkClient } from "@clerk/express";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 // import pdf from 'pdf-parse/lib/pdf-parse.js'
 
 const AI = new OpenAI({
@@ -216,7 +217,7 @@ export const removeImageObject = async (req, res) => {
   try {
     const { userId } = await req.auth();
     const { object } = req.body;
-    const  image  = req.file;
+    const image = req.file;
     const user = await clerkClient.users.getUser(userId);
     const plan = user.raw.unsafe_metadata.plan;
 
@@ -251,14 +252,13 @@ export const removeImageObject = async (req, res) => {
   }
 };
 
+
 export const resumeReview = async (req, res) => {
   try {
     const { userId } = await req.auth();
     const resume = req.file;
     const user = await clerkClient.users.getUser(userId);
     const plan = user.raw.unsafe_metadata.plan;
-
-    // console.log(plan)
 
     if (plan !== "premium") {
       return res.json({
@@ -275,9 +275,22 @@ export const resumeReview = async (req, res) => {
     }
 
     const dataBuffer = fs.readFileSync(resume.path);
-    const pdfData = await pdf(dataBuffer);
+    // Convert Buffer to Uint8Array
+    const uint8Array = new Uint8Array(dataBuffer);
+    
+    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
+    const pdfDocument = await loadingTask.promise;
+    
+    let extractedText = '';
+    
+    for (let i = 1; i <= pdfDocument.numPages; i++) {
+      const page = await pdfDocument.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map(item => item.str).join(' ');
+      extractedText += pageText + '\n';
+    }
 
-    const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resime Content: \n\n ${pdfData.text}`;
+    const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resume Content: \n\n ${extractedText}`;
 
     const response = await AI.chat.completions.create({
       model: "gemini-2.0-flash",
@@ -293,7 +306,7 @@ export const resumeReview = async (req, res) => {
 
     const content = response.choices[0].message.content;
 
-    await sql`INSERT INTO public.creations(user_id, prompt, content,type) VALUES (${userId},'Review the uploaded resume, ${content}, 'resume-review')`;
+    await sql`INSERT INTO public.creations(user_id, prompt, content, type) VALUES (${userId}, 'Review the uploaded resume', ${content}, 'resume-review')`;
 
     res.json({ success: true, content });
   } catch (error) {
