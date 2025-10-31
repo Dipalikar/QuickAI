@@ -13,10 +13,8 @@
   "description": "",
   "dependencies": {
     "@clerk/express": "^1.7.42",
-    "@napi-rs/canvas": "^0.1.81",
     "@neondatabase/serverless": "^1.0.2",
     "axios": "^1.12.2",
-    "canvas": "^3.2.0",
     "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -25,8 +23,7 @@
     "openai": "^6.7.0",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
-    "pdf2json": "^4.0.0",
-    "pdfjs-dist": "^5.4.296"
+    "pdf2json": "^4.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.3",

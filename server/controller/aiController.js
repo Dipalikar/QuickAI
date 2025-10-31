@@ -3,30 +3,13 @@ import sql from "../configs/db.js";
 import { clerkClient } from "@clerk/express";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
-// import pdf from 'pdf-parse/lib/pdf-parse.js'
+import fs from "fs/promises";
+import { PDFParse } from 'pdf-parse';
 
 const AI = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
   baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
 });
-
-export const processPDFFile = async (req, res) => {
-  try {
-    const pdfParse = (await import("pdf-parse")).default;
-
-    const pdfBuffer = req.file.buffer; // or however you get the PDF
-    const data = await pdfParse(pdfBuffer);
-
-    const extractedText = data.text;
-
-    res.json({ success: true, text: extractedText });
-  } catch (error) {
-    console.error("PDF processing error:", error);
-    res.status(500).json({ error: "Failed to process PDF" });
-  }
-};
 
 export const generateArticle = async (req, res) => {
   try {
@@ -131,7 +114,7 @@ export const generateImage = async (req, res) => {
     const user = await clerkClient.users.getUser(userId);
     const plan = user.raw.unsafe_metadata.plan;
 
-    console.log(prompt)
+    console.log(prompt);
 
     if (plan !== "premium") {
       return res.json({
@@ -252,7 +235,6 @@ export const removeImageObject = async (req, res) => {
   }
 };
 
-
 export const resumeReview = async (req, res) => {
   try {
     const { userId } = await req.auth();
@@ -274,21 +256,21 @@ export const resumeReview = async (req, res) => {
       });
     }
 
-    const dataBuffer = fs.readFileSync(resume.path);
-    // Convert Buffer to Uint8Array
-    const uint8Array = new Uint8Array(dataBuffer);
-    
-    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
-    const pdfDocument = await loadingTask.promise;
-    
-    let extractedText = '';
-    
-    for (let i = 1; i <= pdfDocument.numPages; i++) {
-      const page = await pdfDocument.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(item => item.str).join(' ');
-      extractedText += pageText + '\n';
-    }
+    // Read the PDF file buffer asynchronously
+    const dataBuffer = await fs.readFile(resume.path);
+
+    // Create PDFParse instance with buffer
+    const parser = new PDFParse({ data: dataBuffer });
+
+    // Get text from the resume PDF
+    const pdfData = await parser.getText();
+    const extractedText = pdfData.text;
+
+    // Optional: if you want metadata info, uncomment below
+    // const metaData = await parser.getInfo({ parsePageInfo: true });
+    // console.log(metaData);
+
+    await parser.destroy();
 
     const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resume Content: \n\n ${extractedText}`;
 
@@ -310,7 +292,7 @@ export const resumeReview = async (req, res) => {
 
     res.json({ success: true, content });
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.json({
       success: false,
       message: error.message,
