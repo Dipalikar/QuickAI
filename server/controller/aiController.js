@@ -98,7 +98,7 @@ export const generateBlogTitles = async (req, res) => {
         },
       ],
       temperature: 0.7,
-      max_tokens: 100,
+      // max_tokens: 100,
     });
 
     const content = response.choices[0].message.content;
@@ -176,11 +176,11 @@ export const generateImage = async (req, res) => {
 export const removeImageBackgroud = async (req, res) => {
   try {
     const { userId } = await req.auth();
-    const { image } = req.file;
+    const image = req.file;
     const user = await clerkClient.users.getUser(userId);
     const plan = user.raw.unsafe_metadata.plan;
 
-    // console.log(plan)
+    console.log(image.path);
 
     if (plan !== "premium") {
       return res.json({
@@ -189,18 +189,20 @@ export const removeImageBackgroud = async (req, res) => {
       });
     }
 
-    const { secure_url } = await cloudinary.uploader.upload(image.path, {
-      transformation: [
-        {
-          effect: "backgroud-removal",
-          background_removal: "remove_the_background",
-        },
-      ],
+    // First, upload the original image
+    const uploadResult = await cloudinary.uploader.upload(image.path);
+    const publicId = uploadResult.public_id;
+
+    // Then, generate a URL with background removal transformation
+    const transformedUrl = cloudinary.url(publicId, {
+      effect: "background_removal",
+      fetch_format: "png", // Important: use PNG to preserve transparency
     });
 
-    await sql`INSERT INTO public.creations(user_id, prompt, content,type,) VALUES (${userId}, 'Remove background from image', ${secure_url}, 'image')`;
+    console.log("Transformed URL:", transformedUrl);
+    await sql`INSERT INTO public.creations(user_id, prompt, content, type) VALUES (${userId}, 'Remove background from image', ${transformedUrl}, 'image')`;
 
-    res.json({ success: true, content: secure_url });
+    res.json({ success: true, content: transformedUrl });
   } catch (error) {
     console.log(error);
     res.json({
