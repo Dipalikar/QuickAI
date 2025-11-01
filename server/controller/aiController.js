@@ -4,7 +4,7 @@ import { clerkClient } from "@clerk/express";
 import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs/promises";
-import { PDFParse } from 'pdf-parse';
+import PDFParser from "pdf2json";
 
 const AI = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -259,18 +259,24 @@ export const resumeReview = async (req, res) => {
     // Read the PDF file buffer asynchronously
     const dataBuffer = await fs.readFile(resume.path);
 
-    // Create PDFParse instance with buffer
-    const parser = new PDFParse({ data: dataBuffer });
+    // Create PDFParser instance
+    const pdfParser = new PDFParser();
 
-    // Get text from the resume PDF
-    const pdfData = await parser.getText();
-    const extractedText = pdfData.text;
+    // Parse PDF and extract text
+    const extractedText = await new Promise((resolve, reject) => {
+      pdfParser.on("pdfParser_dataError", (errData) => {
+        reject(new Error(errData.parserError));
+      });
 
-    // Optional: if you want metadata info, uncomment below
-    // const metaData = await parser.getInfo({ parsePageInfo: true });
-    // console.log(metaData);
+      pdfParser.on("pdfParser_dataReady", (pdfData) => {
+        // Get raw text content from parsed PDF
+        const textContent = pdfParser.getRawTextContent();
+        resolve(textContent);
+      });
 
-    await parser.destroy();
+      // Parse the buffer
+      pdfParser.parseBuffer(dataBuffer);
+    });
 
     const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resume Content: \n\n ${extractedText}`;
 
