@@ -15,6 +15,7 @@ app.use(express.json());
 app.use(clerkMiddleware());
 
 app.get("/ping", (req, res) => res.send("Server is Live!"));
+// app.get("/", (req, res) => res.send("Server is Live!"));
 
 app.use("/api/ai", aiRouter);
 app.use("/api/user", userRouter);
