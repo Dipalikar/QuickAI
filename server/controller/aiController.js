@@ -19,6 +19,8 @@ export const generateArticle = async (req, res) => {
     const plan = user.raw.unsafe_metadata.plan;
     const free_usage = req.free_usage;
 
+    console.log(length);
+
     if (plan !== "premium" && free_usage >= 10) {
       return res.json({
         success: false,
@@ -26,15 +28,19 @@ export const generateArticle = async (req, res) => {
       });
     }
     const response = await AI.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       messages: [
         {
           role: "user",
-          content: prompt,
+          content:
+            prompt +
+            `
+          NOTE: It will be a article of length ${length} words as selected by user, so generate it accordingly.
+          Don't add any extra notes or heading about it. Make sure that the article end with a relevant sentence and not ended abruptly.`,
         },
       ],
       temperature: 0.7,
-      max_tokens: length,
+      max_tokens: length + 500,
     });
 
     const content = response.choices[0].message.content;
@@ -74,7 +80,7 @@ export const generateBlogTitles = async (req, res) => {
       });
     }
     const response = await AI.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       messages: [
         {
           role: "user",
@@ -133,12 +139,12 @@ export const generateImage = async (req, res) => {
           "x-api-key": process.env.CLIPDROP_API_KEY,
         },
         responseType: "arraybuffer",
-      }
+      },
     );
 
     const base64Image = `data:image/png;base64,${Buffer.from(
       data,
-      "binary"
+      "binary",
     ).toString("base64")}`;
 
     const { secure_url } = await cloudinary.uploader.upload(base64Image);
@@ -281,7 +287,7 @@ export const resumeReview = async (req, res) => {
     const prompt = `Review the following resume and provide constructive feedback on its strengths, weaknesses and areas for improvement. Resume Content: \n\n ${extractedText}`;
 
     const response = await AI.chat.completions.create({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       messages: [
         {
           role: "user",

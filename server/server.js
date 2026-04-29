@@ -8,9 +8,18 @@ import connectCloudinary from "./configs/cloudinary.js";
 
 const app = express();
 
-await connectCloudinary()
+await connectCloudinary();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://quick-ai-livid-omega.vercel.app",
+      "https://quickaix.vercel.app",
+    ],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(clerkMiddleware());
 
