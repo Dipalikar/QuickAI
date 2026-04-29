@@ -13,9 +13,9 @@ await connectCloudinary();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      "https://quick-ai-livid-omega.vercel.app",
-      "https://quickaix.vercel.app",
+      "http://localhost:5173/",
+      "https://quick-ai-livid-omega.vercel.app/",
+      "https://quickaix.vercel.app/",
     ],
     credentials: true,
   }),
